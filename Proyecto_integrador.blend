@@ -1,0 +1,61 @@
+import bpy
+import random
+import math
+
+def crear_material(nombre, color_rgb):
+    mat = bpy.data.materials.new(name=nombre)
+    mat.diffuse_color = (*color_rgb, 1.0)
+    return mat
+
+def generar_escenario():
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
+
+    mat_pared_a = crear_material("ParedOscura", (0.1, 0.1, 0.1))
+    mat_pared_b = crear_material("ParedDetalle", (0.8, 0.2, 0.0))
+    mat_suelo = crear_material("Suelo", (0.2, 0.2, 0.2))
+
+    largo_pasillo = 20
+    ancho_pasillo = 4
+    amplitud_curva = 5
+
+    posiciones = []  
+
+    for i in range(largo_pasillo):
+        x_curva = amplitud_curva * math.sin(i * 0.5)
+        y_pos = (i - largo_pasillo / 2) * 2
+
+        posiciones.append((x_curva, y_pos))
+
+        bpy.ops.mesh.primitive_cube_add(location=(x_curva - ancho_pasillo, y_pos, 1))
+        pared_izq = bpy.context.active_object
+
+        if i % 2 == 0:
+            pared_izq.data.materials.append(mat_pared_a)
+        else:
+            pared_izq.data.materials.append(mat_pared_b)
+            pared_izq.scale.z = 1.5
+
+        bpy.ops.mesh.primitive_cube_add(location=(x_curva + ancho_pasillo, y_pos, 1))
+        pared_der = bpy.context.active_object
+        pared_der.data.materials.append(mat_pared_a)
+
+        bpy.ops.mesh.primitive_plane_add(size=2, location=(x_curva, y_pos, 0))
+        suelo = bpy.context.active_object
+        suelo.scale.x = ancho_pasillo + 1
+        suelo.scale.y = 1
+        suelo.data.materials.append(mat_suelo)
+
+    bpy.ops.object.camera_add(location=(0, posiciones[0][1] - 5, 3))
+    camara = bpy.context.active_object
+    camara.rotation_euler = (math.radians(75), 0, 0)
+
+    bpy.context.scene.camera = camara
+
+    frame = 1
+    for pos in posiciones:
+        camara.location = (pos[0], pos[1], 3)
+        camara.keyframe_insert(data_path="location", frame=frame)
+        frame += 10  # Velocidad del recorrido
+
+generar_escenario()
