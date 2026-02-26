@@ -1,0 +1,53 @@
+import bpy
+import math
+
+def crear_material(nombre, color_rgb):
+    mat = bpy.data.materials.new(name=nombre)
+    mat.diffuse_color = (*color_rgb, 1.0)
+    return mat
+
+def generar_escenario():
+
+    # Limpiar escena
+    bpy.ops.object.select_all(action='SELECT')
+    bpy.ops.object.delete()
+
+    # Crear materiales
+    mat_pared_a = crear_material("ParedOscura", (0.1, 0.1, 0.1))
+    mat_pared_b = crear_material("ParedDetalle", (0.8, 0.2, 0.0))
+    mat_suelo = crear_material("Suelo", (0.2, 0.2, 0.2))
+
+    # Parámetros del pasillo
+    largo_pasillo = 20
+    ancho_pasillo = 4
+    amplitud_curva = 5
+
+    for i in range(largo_pasillo):
+
+        # Cálculo de curvatura
+        x_curva = amplitud_curva * math.sin(i * 0.5)
+        y_pos = (i - largo_pasillo / 2) * 2
+
+        # Pared izquierda
+        bpy.ops.mesh.primitive_cube_add(location=(x_curva - ancho_pasillo, y_pos, 1))
+        pared_izq = bpy.context.active_object
+
+        if i % 2 == 0:
+            pared_izq.data.materials.append(mat_pared_a)
+        else:
+            pared_izq.data.materials.append(mat_pared_b)
+            pared_izq.scale.z = 1.5
+
+        # Pared derecha
+        bpy.ops.mesh.primitive_cube_add(location=(x_curva + ancho_pasillo, y_pos, 1))
+        pared_der = bpy.context.active_object
+        pared_der.data.materials.append(mat_pared_a)
+
+        # Suelo
+        bpy.ops.mesh.primitive_plane_add(size=2, location=(x_curva, y_pos, 0))
+        suelo = bpy.context.active_object
+        suelo.scale.x = ancho_pasillo + 1
+        suelo.scale.y = 1
+        suelo.data.materials.append(mat_suelo)
+
+generar_escenario()
